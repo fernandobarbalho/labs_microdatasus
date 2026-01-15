@@ -12,3 +12,11 @@ dados_sia<-
                 information_system = "SIA-PA")
 
 dados_sia <- process_sia(dados_sia)
+
+glimpse(dados_sia)
+
+unique(dados_sia$munResStatus)
+unique(dados_sia$munResTipo)
+
+
+download.file("ftp://ftp.datasus.gov.br/dissemin/publicos/SIASUS/200801_/Doc/Informe_Tecnico_SIASUS_2019_07.pdf", destfile = "documentacao_sia.pdf", mode ="wb")
