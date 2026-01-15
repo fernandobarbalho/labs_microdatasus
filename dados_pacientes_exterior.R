@@ -10,8 +10,8 @@ estados<- c("AC","AL","AM", "AP", "BA","CE","DF","ES","GO","MA","MT","MS","MG","
 
 dados_sih_1<-
   map_dfr(estados[1:13],function(estado){
-    res<- try(microdatasus::fetch_datasus(year_start = 2025,
-                                          year_end = 2025,
+    res<- try(microdatasus::fetch_datasus(year_start = 2024,
+                                          year_end = 2024,
                                           uf = estado,
                                           month_start = 1,
                                           month_end = 12,
@@ -28,8 +28,8 @@ saveRDS(dados_sih_1,file = "dados_sih_1.RDS")
 
 dados_sih_2<-
   map_dfr(estados[14:18],function(estado){
-    res<- try(microdatasus::fetch_datasus(year_start = 2025,
-                                          year_end = 2025,
+    res<- try(microdatasus::fetch_datasus(year_start = 2024,
+                                          year_end = 2024,
                                           uf = estado,
                                           month_start = 1,
                                           month_end = 12,
@@ -45,12 +45,11 @@ dados_sih_2<-
 
 saveRDS(dados_sih_2,file = "dados_sih_2.RDS")
 
-estados<- c("RJ",  "PR", "SC", "RS", "MS", "MT", "GO", "DF") #Exclusão de SP da lista
 
 dados_sih_3<-
-  map_dfr(estados,function(estado){
-    res<- try(microdatasus::fetch_datasus(year_start = 2025,
-                                          year_end = 2025,
+  map_dfr(estados[c(19:24,26:27)],function(estado){
+    res<- try(microdatasus::fetch_datasus(year_start = 2024,
+                                          year_end = 2024,
                                           uf = estado,
                                           month_start = 1,
                                           month_end = 12,
