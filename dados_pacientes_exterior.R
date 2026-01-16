@@ -162,8 +162,10 @@ saveRDS(dados_sih_2024_abril_novembro_sp, "dados_sih_2024_abril_novembro_sp.rds"
 
 
 ##########################
-#TEntativa de juntar num só dataset de 2024
+#Carga dos datasets previamente salvos. Os datasets estão disponíveis no googledrive a partir do link:
+#https://drive.google.com/drive/folders/1HQRcsMtddN_oVkEhtGAIuJIfE3XbG68E?usp=sharing
 
+dados_sih_2025_abril_novembro_sp <- readRDS("~/github/labs_microdatasus/dados_sih_2025_abril_novembro_sp.rds")
 
 dados_sih_2024_janeiro_marco_sp <- readRDS("~/Github/labs_microdatasus/dados_sih_2024_janeiro_marco_sp.rds")
 dados_sih_2024_abril_novembro_sp <- readRDS("~/Github/labs_microdatasus/dados_sih_2024_abril_novembro_sp.rds")
@@ -185,6 +187,49 @@ dados_sih_3<- janitor::clean_names(dados_sih_3)
 
 ################### sumarizações
 
+
+#O período de abril a novembro de 2025 corresponde aos meses em que estão valendo as regras de fim de reciprocidade para visto dos EUA
+
+df_2025_comparacao<-
+dados_sih_2025_abril_novembro_sp %>%
+  mutate(uf = str_sub(uf_zi,1,2)) %>%
+  mutate(idade = as.numeric(idade)) %>%
+  mutate(idade = case_when(
+    cod_idade %in% c( "Meses","Dias" ) ~ 0,
+    cod_idade == "Centena de anos (100 + idade)" ~ idade + 100,
+    cod_idade == "Anos" ~idade
+  )) %>%
+  summarise(quantidade_2025 = n(),
+            .by = c(nacional)) %>%
+  arrange(desc(quantidade_2025))
+
+df_2024_comparacao<-
+dados_sih_2024_abril_novembro_sp %>%
+  mutate(uf = str_sub(uf_zi,1,2)) %>%
+  mutate(idade = as.numeric(idade)) %>%
+  mutate(idade = case_when(
+    cod_idade %in% c( "Meses","Dias" ) ~ 0,
+    cod_idade == "Centena de anos (100 + idade)" ~ idade + 100,
+    cod_idade == "Anos" ~idade
+  )) %>%
+  summarise(quantidade_2024 = n(),
+            .by = c(nacional)) %>%
+  arrange(desc(quantidade_2024)) 
+
+
+comparacao_2025_2024_abr_nov_sp<-
+df_2025_comparacao %>%
+  inner_join(df_2024_comparacao) %>%
+  mutate(var = quantidade_2025- quantidade_2024,
+         var_perc = ((quantidade_2025/quantidade_2024)-1) * 100 ) %>%
+  arrange(desc(var_perc))
+
+saveRDS(comparacao_2025_2024_abr_nov_sp, "comparacao_2025_2024_abr_nov_sp.rds")
+
+### Sínteses de dados de 2024
+
+
+sintese_sp_2024<-
 dados_sp_2024 %>%
   mutate(uf = str_sub(uf_zi,1,2)) %>%
   mutate(idade = as.numeric(idade)) %>%
@@ -195,12 +240,18 @@ dados_sp_2024 %>%
   )) %>%
   summarise(quantidade = n(),
             media_idade = mean(idade),
-            .by = c(uf, nacional, sexo)) %>%
-  arrange(desc(quantidade)) %>%
-  filter(nacional  == "Estados unidos da america (eua)")%>%
-  arrange(desc(quantidade))
+            .by = c(uf, nacional)) %>%
+  arrange(desc(quantidade)) 
+
+saveRDS(sintese_sp_2024,"sintese_sp_2024.rds")
+
+dados_sp_2024_sem_brasil<-
+  dados_sp_2024 %>%
+  filter(nacional  != "Brasil")
+  
 
 
+sintese_sih_1<-
 dados_sih_1 %>%
   mutate(uf = str_sub(uf_zi,1,2)) %>%
   mutate(idade = as.numeric(idade)) %>%
@@ -211,34 +262,69 @@ dados_sih_1 %>%
   )) %>%
   summarise(quantidade = n(),
             media_idade = mean(idade),
-            .by = c(uf, nacional, sexo)) %>%
-  arrange(desc(quantidade)) %>%
-  filter(nacional  == "Estados unidos da america (eua)")%>%
-  arrange(desc(quantidade))
+            .by = c(uf, nacional)) %>%
+  arrange(desc(quantidade)) 
 
 
-dados_sih_2 %>%
+saveRDS(sintese_sih_1,"sintese_sih_1.rds")
+
+dados_sih_1_sem_brasil<-
+  dados_sih_1 %>%
+  filter(nacional  != "Brasil")
+
+
+sintese_sih_2<-
+  dados_sih_2 %>%
   mutate(uf = str_sub(uf_zi,1,2)) %>%
+  mutate(idade = as.numeric(idade)) %>%
+  mutate(idade = case_when(
+    cod_idade %in% c( "Meses","Dias" ) ~ 0,
+    cod_idade == "Centena de anos (100 + idade)" ~ idade + 100,
+    cod_idade == "Anos" ~idade
+  )) %>%
   summarise(quantidade = n(),
-            .by = c(uf, nacional))  %>%
-  filter(nacional  == "Estados unidos da america (eua)")%>%
-  arrange(desc(quantidade))
+            media_idade = mean(idade),
+            .by = c(uf, nacional)) %>%
+  arrange(desc(quantidade)) 
+
+
+saveRDS(sintese_sih_2,"sintese_sih_2.rds")
+
+dados_sih_2_sem_brasil<-
+  dados_sih_2 %>%
+  filter(nacional  != "Brasil")
 
 
 
-dados_sih_3  %>%
+sintese_sih_3<-
+  dados_sih_3 %>%
   mutate(uf = str_sub(uf_zi,1,2)) %>%
+  mutate(idade = as.numeric(idade)) %>%
+  mutate(idade = case_when(
+    cod_idade %in% c( "Meses","Dias" ) ~ 0,
+    cod_idade == "Centena de anos (100 + idade)" ~ idade + 100,
+    cod_idade == "Anos" ~idade
+  )) %>%
   summarise(quantidade = n(),
-            .by = c(uf, nacional))  %>%
-  filter(nacional  == "Estados unidos da america (eua)")%>%
-  arrange(desc(quantidade))
+            media_idade = mean(idade,na.rm =TRUE),
+            .by = c(uf, nacional)) %>%
+  arrange(desc(quantidade)) 
 
 
+saveRDS(sintese_sih_3,"sintese_sih_3.rds")
 
-glimpse(dados_sp_2024)
+dados_sih_3_sem_brasil<-
+  dados_sih_3 %>%
+  filter(nacional  != "Brasil")
 
-unique(dados_sp_2024$cod_idade)
 
-dados_sp_2024 %>%
-  filter(cod_idade == "Centena de anos (100 + idade)") %>%
-  summarise(n())
+dados_2024_sem_brasil<-
+  dados_sp_2024_sem_brasil %>%
+  bind_rows(
+    dados_sih_1_sem_brasil,
+    dados_sih_2_sem_brasil,
+    dados_sih_3_sem_brasil
+  )
+
+
+saveRDS(dados_2024_sem_brasil, "dados_2024_sem_brasil.rds")
