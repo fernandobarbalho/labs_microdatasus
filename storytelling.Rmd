@@ -83,42 +83,53 @@ dados_2024_sem_brasil %>%
    geom_text(aes(label = quantidade), hjust= 0) +
    scale_x_continuous(expand = expansion(mult = c(0.01, 0.1)))
  
+####Avaliar a validade dos dados de Ilhas Virgens Britânicas e Gibraltar
  
- dados_2024_sem_brasil %>%
-   filter(nacional == "Ilhas virgens britanicas") %>%
-   summarise(quantidade = n(),
-             .by =c(nacional,  uf_zi) ) %>%
-   ggplot(aes(x=nacional, y= quantidade)) +
-   geom_boxplot()
-
-  dados_2024_sem_brasil %>%
-   filter(nacional == "Portugal") %>%
-   summarise(quantidade = n(),
-             .by =c(nacional,  uf_zi) ) %>%
-   ggplot(aes(x=nacional, y= quantidade)) +
-   geom_boxplot()
-
-
-  dados_2024_sem_brasil %>%
-   filter(nacional == "Gibraltar") %>%
-   mutate(uf = str_sub(uf_zi,1,2)) %>%
-   inner_join(uf_ibge) %>%  
-   summarise(quantidade = n(),
-             .by =c(nacional,  sigla_uf) ) %>%
-   arrange(desc(quantidade))
   
-  dados_2024_sem_brasil %>%
-   filter(nacional == "Ilhas virgens britanicas") %>%
-   mutate(uf = str_sub(uf_zi,1,2)) %>%
-   inner_join(uf_ibge) %>%  
-   summarise(quantidade = n(),
-             .by =c(nacional,  sigla_uf) ) %>%
-   arrange(desc(quantidade))
-
-  
-    
-   ggplot(aes(x=nacional, y= quantidade)) +
-   geom_boxplot()
+ # dados_2024_sem_brasil %>%
+ #   filter(nacional == "Ilhas virgens britanicas") %>%
+ #   summarise(quantidade = n(),
+ #             .by =c(nacional,  uf_zi) ) %>%
+ #   ggplot(aes(x=nacional, y= quantidade)) +
+ #   geom_boxplot()
+ # 
+ #  dados_2024_sem_brasil %>%
+ #   filter(nacional == "Portugal") %>%
+ #   summarise(quantidade = n(),
+ #             .by =c(nacional,  uf_zi) ) %>%
+ #   ggplot(aes(x=nacional, y= quantidade)) +
+ #   geom_boxplot()
+ # 
+ # 
+ #  dados_2024_sem_brasil %>%
+ #   filter(nacional == "Gibraltar") %>%
+ #   mutate(uf = str_sub(uf_zi,1,2)) %>%
+ #   inner_join(uf_ibge) %>%  
+ #   summarise(quantidade = n(),
+ #             .by =c(nacional,  sigla_uf) ) %>%
+ #   arrange(desc(quantidade))
+ #  
+ #  dados_2024_sem_brasil %>%
+ #   filter(nacional == "Ilhas virgens britanicas") %>%
+ #   mutate(uf = str_sub(uf_zi,1,2)) %>%
+ #   inner_join(uf_ibge) %>%  
+ #   summarise(quantidade = n(),
+ #             .by =c(nacional,  sigla_uf) ) %>%
+ #   arrange(desc(quantidade))
+ # 
+ # 
+ #  dados_2024_sem_brasil %>%
+ #   filter(nacional == "Ilhas virgens britanicas") %>%
+ #   mutate(uf = str_sub(uf_zi,1,2)) %>%
+ #   inner_join(uf_ibge) %>%  
+ #   summarise(quantidade = n(),
+ #             .by =c(nacional,  cnes) ) %>%
+ #   arrange(desc(quantidade))
+ #  
+ #    
+ #    
+ #   ggplot(aes(x=nacional, y= quantidade)) +
+ #   geom_boxplot()
   
   
    

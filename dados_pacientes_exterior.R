@@ -6,6 +6,8 @@ library(tidyverse)
 estados<- c("AC","AL","AM", "AP", "BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB", "PR","PE","PI","RJ","RS","RN","RO","RR","SC","SP","SE","TO")
 
 
+download.file("ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Doc/IT_SIHSUS_1603.pdf", destfile = "documentacao.pdf", mode= "wb", method = "libcurl" )
+
 
 
 dados_sih_1<-
