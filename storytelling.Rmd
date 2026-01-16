@@ -132,6 +132,35 @@ dados_2024_sem_brasil %>%
  #   geom_boxplot()
   
   
-   
+  # dados_2024_sem_brasil %>%
+  #  filter(nacional == "Guiana francesa") %>%
+  #  mutate(uf = str_sub(uf_zi,1,2)) %>%
+  #  inner_join(uf_ibge) %>%
+  #  summarise(quantidade = n(),
+  #            .by =c(nacional,  uf) ) %>%
+  #  arrange(desc(quantidade))
+
+    
+```
+
+```{r}
+
+dados_grafico_ranking_estados<-
+dados_2024_sem_brasil %>%
+  filter(nacional != "Reservado") %>%
+  mutate(uf = str_sub(uf_zi,1,2)) %>%
+  inner_join(uf_ibge) %>%
+  summarise(quantidade = n(),
+            .by = sigla_uf) %>%
+  mutate(sigla_uf = reorder(sigla_uf, quantidade))
+
+
+ dados_grafico_ranking_estados %>%
+   ggplot(aes(x= quantidade, y= sigla_uf)) +
+   geom_col() +
+   geom_text(aes(label = quantidade), hjust= 0) +
+   scale_x_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+
 ```
 
