@@ -9,11 +9,28 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 
+library(spData)
+library(sf)
+library(colorspace)
+
+data("world")
+
+mapa_estados<- geobr::read_state(simplified = FALSE)
+
+paises_sus_corrigido_iso <- read_csv("paises_sus_corrigido_iso.csv")
+
 dados_2024_sem_brasil <- readRDS("~/github/labs_microdatasus/dados_2024_sem_brasil.rds")
 sintese_sih_1 <- readRDS("~/github/labs_microdatasus/sintese_sih_1.rds")
 sintese_sih_2 <- readRDS("~/github/labs_microdatasus/sintese_sih_2.rds")
 sintese_sih_3 <- readRDS("~/github/labs_microdatasus/sintese_sih_3.rds")
 sintese_sp_2024 <- readRDS("~/github/labs_microdatasus/sintese_sp_2024.rds")
+
+dados_mapa_total<-
+  dados_2024_sem_brasil %>%
+  inner_join(paises_sus_corrigido_iso) %>%
+  summarise(quantidade = n(),
+            .by = iso_a2)
+
 
 uf_ibge<-
   
@@ -33,6 +50,18 @@ tibble(
     "PR","SC","RS"
   )
 )
+
+
+cor_fundo<- "#D0D0D0"# "#F8F8F8"
+
+cor_fundo_painel<- "#F5F5F5"
+
+cor_fundo_estados<- "#696969"
+
+cor_fundo_mapa_pontos <- "#2B2B2B" #"#505050"
+
+cor_texto<- "#324e5a"
+
 
 ```
 
@@ -59,13 +88,14 @@ dados_grafico_brasil_outros<-
   dados_brasil_outros %>%
   mutate(proporcao = quantidade/total_atendimentos)
 
+
+
 ```
 
 ```{r}
 
 
 
-unique(dados_sp_2024_sem_brasil$nacional)
 
 
 dados_grafico_ranking_pais<-
@@ -74,7 +104,7 @@ dados_2024_sem_brasil %>%
   summarise(quantidade = n(),
             .by =nacional ) %>%
   mutate(nacional = reorder(nacional, quantidade)) %>%
-  slice_max(n= 20, order_by = quantidade)
+  slice_max(n= 30, order_by = quantidade)
   
 
  dados_grafico_ranking_pais %>%
@@ -160,6 +190,238 @@ dados_2024_sem_brasil %>%
    geom_col() +
    geom_text(aes(label = quantidade), hjust= 0) +
    scale_x_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+ 
+ dados_2024_sem_brasil %>%
+   filter(nacional!= "Reservado") %>%
+   distinct(nacional) %>%
+   readr::write_csv("paises_sus.csv")
+   
+
+```
+
+
+```{r fig.dpi= 300}
+
+
+mapa_total<-
+world %>%
+  inner_join(dados_mapa_total)
+
+
+mapa_total %>%
+  ggplot() +
+  geom_sf(data = world , fill = cor_fundo_painel) +
+  geom_sf(aes(fill= quantidade)) +
+  geom_sf(data = world %>%  filter(iso_a2== "BR"), fill = "darkgreen") +
+  geom_text(data = tibble(long = -122, lat= -0), aes(x=long, y= lat, label =str_wrap("13,9 milhões de atendimentos a brasileiros ou 99,7% do total", 15) ), color= "white", size =3.5, fontface = "bold", vjust=1) +
+  geom_curve( data = tibble(long =  -80, lat= -20  ),
+              aes( x=long, y=lat, xend = -47, yend = -15),
+              curvature = 0.25, ncp = 50,
+              arrow = arrow(length = unit(2, "mm"), type = "closed"),
+              color = "white")+
+  scale_fill_continuous_sequential(palette = "heat 2", label = scales::number_format(big.mark = ".")) +
+  coord_sf(xlim = c(-180,180), ylim=c(-52,90))+
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill="#0077be"),
+    legend.position = "right",
+    legend.background = element_rect(fill= cor_fundo, color = cor_fundo),
+    plot.background = element_rect(fill =cor_fundo ),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    text = element_text( colour = cor_texto),
+    strip.text = element_text(size= 8, face ="bold")
+  ) + 
+  labs(
+    fill= "Atendimentos",
+    title = "Em 2024 o SUS atendeu pacientes de mais de 180 nacionalidades",
+    subtitle = "Foram mais de 46 mil atendimentos a estrangeiros nos hospitais da rede",
+    caption = paste0("Fonte: Datasus. Elaboração: VPR/DIESO") 
+  )
+  
+  
+```
+
+```{r fig.dpi= 300}
+
+
+mapa_america_do_sul<-
+world %>%
+  filter(continent == "South America") %>%
+  inner_join(dados_mapa_total)
+
+
+mapa_america_do_sul %>%
+  ggplot() +
+  geom_sf(data = world , fill = cor_fundo_mapa_pontos) +
+  geom_sf(aes(fill= quantidade)) +
+  geom_sf(data = world %>%  filter(iso_a2== "BR"), fill = "darkgreen") +
+  geom_text(data = tibble(long = -90, lat= -10), aes(x=long, y= lat, label =str_wrap("Venezuela é o país com maior presença: 13,3 mil atendimentos", 18) ), color= "white", size =3.5, fontface = "bold", vjust=1) +
+  geom_curve( data = tibble(long = -70, lat= 8),
+              aes( x=long, y=lat, xend = -90, yend = -10),
+              curvature = 0.25, ncp = 50,
+              arrow = arrow(length = unit(3, "mm"), type = "closed"),
+              color = "white")+
+  geom_text(data = tibble(long = -35, lat= -25), aes(x=long, y= lat, label =str_wrap("6.050 km de fronteira: Bolívia, Paraguai e Argentina somam 11 mil registros ", 22) ), color= "white", size =3.5, fontface = "bold", vjust=1)+
+  geom_curve( data = tibble(long = -65, lat= -18),
+              aes( x=long, y=lat, xend = -47, yend = -30),
+              curvature = 0.25, ncp = 50,
+              arrow = arrow(length = unit(3, "mm"), type = "closed"),
+              color = "white")+
+  scale_fill_continuous_sequential(palette = "heat 2", label = scales::number_format(big.mark = ".")) +
+  coord_sf(xlim = c(-24,-100), ylim=c(-53,10))+
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill="#0077be"),
+    legend.position = "right",
+    legend.background = element_rect(fill= cor_fundo, color = cor_fundo),
+    plot.background = element_rect(fill =cor_fundo ),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    text = element_text( colour = cor_texto),
+    strip.text = element_text(size= 8, face ="bold")
+  ) + 
+  labs(
+    fill= "Atendimentos",
+    title = "SUS registra 27 mil atendimentos a sul-americanos",
+    subtitle = "Esse grupo responde por 58% dos atendimentos a estrangeiros",
+    caption = paste0("Fonte: Datasus. Elaboração: VPR/DIESO") 
+  )
+
+
+```
+
+```{r fig.dpi= 300}
+mapa_imigrantes<-
+world %>%
+  filter(iso_a2 %in% c("PT","IT","JP", "DE")) %>%
+  inner_join(dados_mapa_total)
+
+
+media_idade_geral<-
+ dados_2024_sem_brasil %>%
+  mutate(idade = as.numeric(idade)) %>%
+  mutate(idade = case_when(
+    cod_idade %in% c( "Meses","Dias" ) ~ 0,
+    cod_idade == "Centena de anos (100 + idade)" ~ idade + 100,
+    cod_idade == "Anos" ~idade
+  )) %>%
+  summarise(media_idade = mean(idade))
+
+
+media_idade_imigrantes<-
+ dados_2024_sem_brasil %>%
+  inner_join(paises_sus_corrigido_iso) %>%
+  filter(iso_a2 %in% c("PT","IT","JP", "DE"))  %>%
+  mutate(idade = as.numeric(idade)) %>%
+  mutate(idade = case_when(
+    cod_idade %in% c( "Meses","Dias" ) ~ 0,
+    cod_idade == "Centena de anos (100 + idade)" ~ idade + 100,
+    cod_idade == "Anos" ~idade
+  )) %>%
+  summarise(media_idade = mean(idade))
+
+mapa_imigrantes %>%
+  ggplot() +
+  geom_sf(data = world , fill = cor_fundo_mapa_pontos, color= NA) +
+  geom_sf(aes(fill= quantidade)) +
+  geom_text(data = tibble(long = 0, lat= 35), 
+             aes(x=long, y= lat, label =str_wrap("Portugal é o país não sul-americano com mais atendimentos no SUS: 1,8 mil", 60) ), 
+             color= "white", 
+             size =3.5, 
+             fontface = "bold", 
+             vjust=1, 
+             hjust =0, 
+             alpha = 1,
+             fill = cor_fundo_painel) +
+  geom_curve( data = tibble(long = -8, lat= 39,4),
+              aes( x=long, y=lat, xend = 0, yend = 33),
+              curvature = 0.25, ncp = 50,
+              arrow = arrow(length = unit(2, "mm"), type = "closed"),
+              color = "white")+
+  geom_text(data = tibble(long = 80, lat= 55), aes(x=long, y= lat, label =str_wrap("A média de idade dos pacientes desses quatro países é 67 anos — 1,8x a média considerando todos os países.", 51) ), color= "white", size =3.5, fontface = "bold", vjust=1)+
+  scale_fill_continuous_sequential(palette = "heat 2", label = scales::number_format(big.mark = ".")) +
+  coord_sf(xlim = c(-5,150), ylim=c(25,60))+
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill="#0077be"),
+    legend.position = "right",
+    legend.background = element_rect(fill= cor_fundo, color = cor_fundo),
+    plot.background = element_rect(fill =cor_fundo ),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    text = element_text( colour = cor_texto),
+    strip.text = element_text(size= 8, face ="bold")
+  ) + 
+  labs(
+    fill= "Atendimentos",
+    title = "Países de imigração histórica somam 3.454 atendimentos no SUS",
+    subtitle = "Portugal, Japão, Itália e Alemanha estão entre as 15 nacionalidades mais atendidas",
+    caption = paste0("Fonte: Datasus. Elaboração: VPR/DIESO") 
+  )
+
+
+```
+```{r fig.dpi= 300}
+
+
+
+dados_venezuela<-
+  uf_ibge %>%
+  left_join(
+     dados_2024_sem_brasil %>%
+  filter(nacional == "Venezuela") %>%
+  mutate(uf = str_sub(uf_zi,1,2)) 
+  )%>%
+  summarise(quantidade = n(),
+            .by = sigla_uf) 
+
+
+
+mapa_estados_venezuela<-
+mapa_estados %>%
+  inner_join(
+    dados_venezuela %>%
+      rename(abbrev_state = sigla_uf)
+  ) 
+
+mapa_estados_venezuela  %>%
+  ggplot() +
+  geom_sf(data = world , fill = cor_fundo_mapa_pontos, color = "lightgray") +
+  geom_sf(aes(fill= quantidade)) +
+  geom_sf(data = world %>%  filter(iso_a2== "VE"), fill = "#0B6E4F") +
+  geom_text(data = tibble(long = -90, lat= -10), aes(x=long, y= lat, label =str_wrap("32% dos atendimentos de Venezuelanos ocorreram em RR (4285 registros)", 18) ), color= "white", size =3.5, fontface = "bold", vjust=1) +
+  geom_curve( data = tibble(long = -60.7, lat= 2.8),
+              aes( x=long, y=lat, xend = -90, yend = -10),
+              curvature = 0.25, ncp = 50,
+              arrow = arrow(length = unit(3, "mm"), type = "closed"),
+              color = "white")+
+  geom_text(data = tibble(long = -48, lat= -27), aes(x=long, y= lat, label =str_wrap("29% dos atendimentos foram em SC (3828 registros)", 28) ), color= "white", size =3.5, fontface = "bold", vjust=1, hjust= 0) +
+  # geom_curve( data = tibble(long = -60.7, lat= 2.8),
+  #             aes( x=long, y=lat, xend = -90, yend = -10),
+  #             curvature = 0.25, ncp = 50,
+  #             arrow = arrow(length = unit(3, "mm"), type = "closed"),
+  #             color = "white")+  
+  scale_fill_continuous_sequential(palette = "heat 2", label = scales::number_format(big.mark = ".")) +
+  coord_sf(xlim = c(-24,-100), ylim=c(-34,10))+
+  theme_void() +
+  theme(
+    panel.background = element_rect(fill="#0077be"),
+    legend.position = "right",
+    legend.background = element_rect(fill= cor_fundo, color = cor_fundo),
+    plot.background = element_rect(fill =cor_fundo ),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    text = element_text( colour = cor_texto),
+    strip.text = element_text(size= 8, face ="bold")
+  ) + 
+  labs(
+    fill= "Atendimentos",
+    title = "Atendimentos a venezuelanos",
+    subtitle = "85% dos registros ocorream em RR, SC,PR, RS e  AM",
+    caption = paste0("Fonte: Datasus. Elaboração: VPR/DIESO") 
+  )
 
 
 ```
