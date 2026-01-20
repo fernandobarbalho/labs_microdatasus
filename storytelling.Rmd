@@ -340,7 +340,7 @@ mapa_imigrantes %>%
               curvature = 0.25, ncp = 50,
               arrow = arrow(length = unit(2, "mm"), type = "closed"),
               color = "white")+
-  geom_text(data = tibble(long = 80, lat= 55), aes(x=long, y= lat, label =str_wrap("A média de idade dos pacientes desses quatro países é 67 anos — 1,8x a média considerando todos os países.", 51) ), color= "white", size =3.5, fontface = "bold", vjust=1)+
+  geom_text(data = tibble(long = 80, lat= 55), aes(x=long, y= lat, label =str_wrap("A média de idade dos pacientes desses quatro países é 67 anos — 1,8x a média considerando todos os países (37 anos)", 51) ), color= "white", size =3.5, fontface = "bold", vjust=1)+
   scale_fill_continuous_sequential(palette = "heat 2", label = scales::number_format(big.mark = ".")) +
   coord_sf(xlim = c(-5,150), ylim=c(25,60))+
   theme_void() +
@@ -363,6 +363,7 @@ mapa_imigrantes %>%
 
 
 ```
+
 ```{r fig.dpi= 300}
 
 
@@ -398,11 +399,6 @@ mapa_estados_venezuela  %>%
               arrow = arrow(length = unit(3, "mm"), type = "closed"),
               color = "white")+
   geom_text(data = tibble(long = -48, lat= -27), aes(x=long, y= lat, label =str_wrap("29% dos atendimentos foram em SC (3828 registros)", 28) ), color= "white", size =3.5, fontface = "bold", vjust=1, hjust= 0) +
-  # geom_curve( data = tibble(long = -60.7, lat= 2.8),
-  #             aes( x=long, y=lat, xend = -90, yend = -10),
-  #             curvature = 0.25, ncp = 50,
-  #             arrow = arrow(length = unit(3, "mm"), type = "closed"),
-  #             color = "white")+  
   scale_fill_continuous_sequential(palette = "heat 2", label = scales::number_format(big.mark = ".")) +
   coord_sf(xlim = c(-24,-100), ylim=c(-34,10))+
   theme_void() +
@@ -465,14 +461,59 @@ dados_grafico_top_10_paises_estados_sel<-
   filter(nome_corrigido %in% top_10_paises_estados_sel$nome_corrigido) %>%
   inner_join(uf_ibge) %>%
   inner_join(total_estados) %>%
-  mutate(propocao = quantidade/quantidade_total_estado) %>%
+  mutate(proporcao = quantidade/quantidade_total_estado) %>%
   mutate(sigla_uf = factor(sigla_uf, levels = c("RR","SC","PR","RS","AM"))) %>%
   mutate(nome_corrigido = fct_reorder(nome_corrigido, quantidade, sum ))
 
+dados_sel<-
+  dados_grafico_top_10_paises_estados_sel %>%
+  filter(proporcao >= 0.01)
+
 dados_grafico_top_10_paises_estados_sel %>%
-  ggplot(aes(x= propocao, y= nome_corrigido)) +
-  geom_col() +
-  facet_wrap(sigla_uf~.)
+  ggplot(aes(x= proporcao, y= nome_corrigido)) +
+  geom_col( aes(fill = proporcao), show.legend =  FALSE) +
+  geom_text(data = dados_sel,
+            aes(label = scales::percent(proporcao, accuracy = 0.1)), 
+            size = 3, 
+            hjust = 0, 
+            color= cor_texto,
+            fontface = "bold") +
+  geom_text( data = tibble(sigla_uf= factor(c("RR","SC","PR","RS","AM"), levels = c("RR","SC","PR","RS","AM"))[1], nome_corrigido = "República do Haiti", proporcao=0.09),
+             aes(label =str_wrap("Atendimentos: 32,8 mil a brasileiros e 4,3 mil a venezuelanos", 17)),
+             size = 3,
+             vjust= 1,
+             hjust = 0,
+             color = cor_texto,
+             fontface = "bold") + 
+  geom_curve( data  = tibble(sigla_uf= factor(c("RR","SC","PR","RS","AM"), levels = c("RR","SC","PR","RS","AM"))[1], nome_corrigido = "República do Haiti", proporcao=0.85),
+              aes( xend = 0.8, yend = "Venezuela"),
+              curvature = 0.25, ncp = 50,
+              arrow = arrow(length = unit(2, "mm"), type = "closed"),
+              color = cor_texto) +
+  scale_fill_continuous_sequential(palette = "Heat") +
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.4))) +
+  theme_light() +
+  theme(
+    panel.background = element_rect(fill=cor_fundo_painel),
+    panel.grid = element_blank(),
+    legend.position = "right",
+    legend.background = element_rect(fill= cor_fundo, color = cor_fundo),
+    plot.background = element_rect(fill =cor_fundo ),
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 12, face = "italic"),
+    text = element_text( colour = cor_texto),
+    strip.text = element_text(size= 8, face ="bold"),
+    axis.text.x = element_blank(),
+    axis.title = element_blank()
+  ) + 
+  labs(
+    title = "A proporção de atendimentos a venezuelanos é relevante em RR",
+    subtitle = "Dez países com maior ocorrência nos hospitais de RR, SC, PR, RS e AM",
+    caption = paste0("Fonte: Datasus. Elaboração: VPR/DIESO") 
+  ) +
+  facet_wrap(sigla_uf~., ncol= 5)
+
+
 
 
 
