@@ -426,3 +426,55 @@ mapa_estados_venezuela  %>%
 
 ```
 
+
+```{r fig.dpi= 300}
+ 
+sort(unique(sintese_sih_1$uf))
+
+sort(unique(sintese_sih_2$uf))
+
+sort(unique(sintese_sih_3$uf))
+
+dados_estados_sel<-
+  sintese_sih_1 %>%
+  bind_rows(
+    sintese_sih_2,
+    sintese_sih_3
+  ) %>%
+  filter( uf %in% c("13","14","41", "42", "43"),
+          nacional != "Reservado") %>%
+  left_join(paises_sus_corrigido_iso) %>%
+  mutate(nome_corrigido = ifelse(nacional == "Brasil","Brasil",nome_corrigido)) 
+  
+
+top_10_paises_estados_sel<-
+dados_estados_sel%>%
+  summarise(quantidade = sum(quantidade),
+            .by = nome_corrigido) %>%
+  slice_max(order_by = quantidade, n=10)
+
+
+total_estados<-
+  dados_estados_sel %>%
+  summarise(quantidade_total_estado = sum(quantidade),
+            .by = uf)
+
+
+dados_grafico_top_10_paises_estados_sel<-
+  dados_estados_sel %>%
+  filter(nome_corrigido %in% top_10_paises_estados_sel$nome_corrigido) %>%
+  inner_join(uf_ibge) %>%
+  inner_join(total_estados) %>%
+  mutate(propocao = quantidade/quantidade_total_estado) %>%
+  mutate(sigla_uf = factor(sigla_uf, levels = c("RR","SC","PR","RS","AM"))) %>%
+  mutate(nome_corrigido = fct_reorder(nome_corrigido, quantidade, sum ))
+
+dados_grafico_top_10_paises_estados_sel %>%
+  ggplot(aes(x= propocao, y= nome_corrigido)) +
+  geom_col() +
+  facet_wrap(sigla_uf~.)
+
+
+
+```
+
