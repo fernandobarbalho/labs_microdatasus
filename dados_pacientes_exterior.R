@@ -162,6 +162,37 @@ saveRDS(dados_sih_2024_abril_novembro_sp, "dados_sih_2024_abril_novembro_sp.rds"
 
 
 
+############Dados de Roraima
+
+dados_sih_RR_2025<-
+  map_dfr("RR",function(estado){
+    res<- try(microdatasus::fetch_datasus(year_start = 2025,
+                                          year_end = 2025,
+                                          uf = estado,
+                                          month_start = 1,
+                                          month_end = 10,
+                                          information_system = "SIH-RD"))
+    
+    if (inherits(res, "try-error")){
+      return()
+    }
+    
+    res
+    
+    #microdatasus::process_sih(res)
+  })
+
+dados_sih_RR_2025 <- janitor::clean_names(dados_sih_RR_2025)
+
+#Venezuela, código =92 
+#Brasil, código =10
+
+total_linhas<- NROW(dados_sih_RR_2025) 
+
+dados_sih_RR_2025 %>%
+  filter(nacional %in% c("010","092")) %>%
+  summarise(proporcao = n()/total_linhas,
+            .by = nacional)
 
 ##########################
 #Carga dos datasets previamente salvos. Os datasets estão disponíveis no googledrive a partir do link:
