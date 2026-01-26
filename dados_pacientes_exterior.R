@@ -131,6 +131,50 @@ dados_sih_2024_abril_novembro_sp %>%
             .by = nacional) %>%
   arrange(desc(quantidade))
 
+dados_sih_2024_abril_novembro_sp<-
+  map_dfr(estados,function(estado){
+    print(estado)
+    res<- try(microdatasus::fetch_datasus(year_start = 2024,
+                                          year_end = 2024,
+                                          uf = estado,
+                                          month_start = 4,
+                                          month_end = 11,
+                                          information_system = "SIH-RD"))
+    
+    if (inherits(res, "try-error")){
+      return()
+    }
+    
+    microdatasus::process_sih(res)
+  })
+
+
+dados_sih_2024_abril_novembro_sp <- janitor::clean_names(dados_sih_2024_abril_novembro_sp)
+
+
+
+dados_sih_2024_dezembro_sp<-
+  map_dfr("SP",function(estado){
+    print(estado)
+    res<- try(microdatasus::fetch_datasus(year_start = 2024,
+                                          year_end = 2024,
+                                          uf = estado,
+                                          month_start = 12,
+                                          month_end = 12,
+                                          information_system = "SIH-RD"))
+    
+    if (inherits(res, "try-error")){
+      return()
+    }
+    
+    microdatasus::process_sih(res)
+  })
+
+
+dados_sih_2024_dezembro_sp <- janitor::clean_names(dados_sih_2024_dezembro_sp)
+
+
+
 dados_sih_2025_abril_novembro_sp<-
   map_dfr(estados,function(estado){
     print(estado)
