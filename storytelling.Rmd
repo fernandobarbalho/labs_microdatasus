@@ -393,7 +393,7 @@ mapa_estados_venezuela  %>%
   ggplot() +
   geom_sf(data = world , fill = cor_fundo_mapa_pontos, color = "lightgray") +
   geom_sf(aes(fill= quantidade)) +
-  geom_sf(data = world %>%  filter(iso_a2== "VE"), fill = "#0B6E4F") +
+  geom_sf(data = world %>%  filter(iso_a2== "VE"), fill = "#B08FA8") +
   geom_text(data = tibble(long = -90, lat= -10), aes(x=long, y= lat, label =str_wrap("32% dos atendimentos de Venezuelanos ocorreram em RR (4285 registros)", 18) ), color= "white", size =3.5, fontface = "bold", vjust=1) +
   geom_curve( data = tibble(long = -60.7, lat= 2.8),
               aes( x=long, y=lat, xend = -90, yend = -10),
@@ -449,7 +449,12 @@ dados_estados_sel%>%
 
 
 total_estados<-
-  dados_estados_sel %>%
+  sintese_sih_1 %>%
+  bind_rows(
+    sintese_sih_2,
+    sintese_sih_3
+  ) %>%
+  filter( uf %in% c("13","14","41", "42", "43")) %>%
   summarise(quantidade_total_estado = sum(quantidade),
             .by = uf)
 
