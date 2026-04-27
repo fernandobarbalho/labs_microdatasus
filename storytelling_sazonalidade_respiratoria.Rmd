@@ -1,0 +1,165 @@
+---
+title: "storytelling_sazonalidade_respiratoria"
+author: "Fernando Almeida Barbalho"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(geobr)
+library(colorspace)
+
+participacao_mes <- readRDS("~/github/labs_microdatasus/participacao_mes.rds")
+
+sedes<- geobr::read_municipal_seat()
+municipios<- geobr::read_municipality(simplified = FALSE) 
+regioes<- geobr::read_region()
+
+theme_vpr<- function(paleta_cores){
+  
+  theme_light() +
+    theme(
+      panel.background = element_rect(fill= paleta_cores$cor_fundo_painel),
+      panel.grid = element_blank(),
+      legend.position = "right",
+      legend.background = element_rect(fill= paleta_cores$cor_fundo, color = paleta_cores$cor_fundo),
+      legend.title = element_blank(),
+      legend.text = element_text(size = 8),
+      plot.background = element_rect(fill =paleta_cores$cor_fundo ),
+      plot.title = element_text(size = 12, face = "bold"),
+      plot.subtitle = element_text(size = 10, face = "italic"),
+      text = element_text( colour = paleta_cores$cor_texto),
+      strip.background = element_rect(fill = paleta_cores$cor_fundo  ),
+      strip.text = element_text(size= 8, face ="bold", color = paleta_cores$cor_texto)
+    )  
+  
+  
+}
+
+
+paleta_cores<- list(  cor_fundo= "#D0D0D0", # "#E0E0E0", # # "#F8F8F8",
+                      
+                      cor_fundo_painel = "#F5F5F5",
+                      
+                      cor_fundo_estados = "#696969",
+                      
+                      cor_fundo_mapa_pontos = "#2B2B2B", #"#505050"
+                      
+                      cor_texto = "#324e5a"
+)
+
+
+```
+
+
+```{r fig.dpi= 300}
+
+sedes_convert<-
+  extract(sedes, geom, into = c('Lon', 'Lat'), '\\((.*),(.*)\\)', conv = T) %>%
+  janitor::clean_names()
+
+base_dados_mapa_sazonalidade<-
+  sedes_convert %>%
+  mutate(munic_res = as.character(code_muni),
+         munic_res = str_sub(code_muni,1,6)) %>%
+  inner_join(participacao_mes) %>%
+  mutate(
+    mes_internacao = factor(
+      mes_internacao,
+      levels = 1:12,
+      labels = c("Jan","Feb","Mar","Apr","May","Jun",
+                 "Jul","Aug","Sep","Oct","Nov","Dec")
+    ))
+
+dados_mapa_sazonalidade<-
+  base_dados_mapa_sazonalidade %>%
+  bind_rows(
+    base_dados_mapa_sazonalidade %>%
+      mutate(name_region = "Brasil")  
+  ) %>%
+  inner_join(
+    tibble(
+      name_region = c("Norte", "Nordeste", "Centro Oeste", "Sul", "Sudeste", "Brasil"),
+      name_region_en = c("North", "Northeast", "Central-West", "South", "Southeast", "Brazil")
+    )) %>%
+  
+  mutate(name_region_en = factor(name_region_en, levels = c("North", "Northeast", "Central-West", "Southeast", "South", "Brazil")))
+
+
+dados_resumo<-
+  dados_mapa_sazonalidade %>%
+  summarise(desvio_padrao_participacao = sd(participacao_internacao_mes),
+            mediana_latitude = median(lat),
+            media_latitude =mean(lat),
+            .by = name_region_en)
+
+
+dados_mapa_sazonalidade %>%
+  ggplot(aes(x= mes_internacao, y=participacao_internacao_mes)) +
+  geom_boxplot(aes(color = name_region_en), 
+               fill=NA, 
+               outliers = FALSE,
+            show.legend = FALSE)  +
+  geom_text(data= dados_resumo, 
+            aes(x=1, y=0.28, label = paste0("Median latitude:  ", scales::number(abs(mediana_latitude), accuracy = 0.0001, decimal.mark = ","),"ºS"  ), colour = name_region_en),
+            size = 3,
+            hjust =0,
+            fontface = "bold",
+            show.legend = FALSE) +
+  scale_color_discrete_qualitative(palette = "Dark 2") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1.0), expand = expansion(mult = c(0.01,0.1))) +
+  theme_vpr(paleta_cores = paleta_cores) +
+  theme(axis.text = element_text(size = 6 ),
+        axis.title = element_text(size = 8))+
+  labs(
+    title = "More defined seasons, clearer seasonality in Brazil",
+    subtitle = "The South and Southeast regions exhibit more pronounced cycles of respiratory hospitalizations in 2024,\n whereas lower-latitude regions show more stable levels with only isolated fluctuations.",
+    caption = "Data refer to ICD-10 respiratory diseases (Chapter J). Source: DATASUS (2024). Prepared by Fernando Barbalho.",
+    x= "Month of hospitalization",
+    y= "Distribution (%) of respiratory hospitalizations") +
+  facet_wrap(name_region_en~.)
+
+
+
+  
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r fig.dpi=300}
+
+# base_dados_mapa_regioes<-
+#   as.tibble(
+#       sedes %>%
+#     mutate(munic_res = as.character(code_muni),
+#          munic_res = str_sub(code_muni,1,6))
+#     ) %>%
+#     select(name_region, munic_res)%>%
+#   inner_join(participacao_mes) %>%
+#   mutate(mes_internacao = factor(as.character(mes_internacao), levels = c("1","2","3","4","5","6","7","8","9","10","11","12")) ) %>%
+#   summarise (mediana_internacoes = median(participacao_internacao_mes),
+#           .by = c(mes_internacao, name_region)) 
+# 
+# dados_mapa_regioes<-
+#   regioes %>%
+#   inner_join(base_dados_mapa_regioes)
+# 
+# 
+# 
+# dados_mapa_regioes %>%
+# ggplot()+
+#   geom_sf(aes(fill = mediana_internacoes) ) +
+#   facet_wrap(mes_internacao~.) +
+#   scale_fill_continuous_sequential(palette = "Heat 2")
+  
+
+
+```
+
+
