@@ -3,6 +3,11 @@ library(microdatasus)
 library(tidyverse)
 
 
+#install.packages("remotes")
+#install.packages("read.dbc", repos = "https://packagemanager.posit.co/cran/2024-07-05")
+#remotes::install_github("rfsaldanha/microdatasus")
+
+
 estados<- c("AC","AL","AM", "AP", "BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB", "PR","PE","PI","RJ","RS","RN","RO","RR","SC","SP","SE","TO")
 
 
@@ -173,7 +178,7 @@ dados_sih_2024_dezembro_sp<-
 
 dados_sih_2024_dezembro_sp <- janitor::clean_names(dados_sih_2024_dezembro_sp)
 
-
+saveRDS(dados_sih_2024_dezembro_sp,"dados_sih_2024_dezembro_sp.rds")
 
 dados_sih_2025_abril_novembro_sp<-
   map_dfr(estados,function(estado){
